@@ -1,13 +1,76 @@
 require 'json'
 require 'date'
 
-file = File.read('data/input.json')
-data = JSON.parse(file)
+class ParseJsonData
+  def initialize(file_path)
+    file = File.read(file_path)
+    data = JSON.parse(file)
 
-cars = data['cars']
-rentals = data['rentals']
-options = data['options']
-ouput = { 'rentals' => [] }
+    @options = data['options']
+    @cars = data['cars']
+    @rentals = data['rentals']
+    @ouput = { 'rentals' => [] }
+
+    create_instances
+  end
+
+  def create_instances
+    create_cars
+    create_rentals
+    create_options
+  end
+
+  def create_cars
+    @cars = @cars.map { |car| Car.new(price_per_day: car['price_per_day'], price_per_km: car['price_per_km']) }
+  end
+
+  def create_rentals
+    @rentals = @rentals.map do |rental|
+      Rental.new(car_id: rental['car_id'], start_date: rental['start_date'], end_date: rental['end_date'],
+                 distance: rental['distance'])
+    end
+  end
+
+  def create_options
+    @options = @options.map { |option| Option.new(rental_id: option['rental_id'], type: option['type']) }
+  end
+end
+
+class Car
+  def initialize(price_per_day:, price_per_km:)
+    @price_per_day = price_per_day
+    @price_per_km = price_per_km
+  end
+end
+
+class Rental
+  def initialize(car_id:, start_date:, end_date:, distance:)
+    @car_id = car_id
+    @start_date = start_date
+    @end_date = end_date
+    @distance = distance
+
+    @number_of_days = calculate_number_of_days
+
+    @total_price_gps = 0
+    @total_price_baby_seat = 0
+    @total_price_additional_insurance = 0
+    @options_array = []
+  end
+
+  def calculate_number_of_days
+    (Date.parse(end_date).mjd - Date.parse(start_date).mjd + 1).to_f
+  end
+end
+
+class Option
+  def initialize(rental_id:, type:)
+    @rental_id = rental_id
+    @type = type
+  end
+end
+
+data = ParseJsonData.new('data/input.json')
 
 def calculate_total_price_day(price_per_day, number_of_days)
   price_per_day_10_off = price_per_day * 0.9
@@ -38,16 +101,10 @@ def calculate_total_price_day(price_per_day, number_of_days)
 end
 
 rentals.each do |rental|
-  number_of_days = (Date.parse(rental['end_date']).mjd - Date.parse(rental['start_date']).mjd + 1).to_f
-  car = cars.select { |car| car['id'] == rental['car_id'] }.first
-  rental_options = options.select { |option| option['rental_id'] == rental['id'] }
+  # car = cars.select { |car| car['id'] == rental['car_id'] }.first
+  # rental_options = options.select { |option| option['rental_id'] == rental['id'] }
 
   total_price_day = calculate_total_price_day(car['price_per_day'].to_f, number_of_days)
-
-  total_price_gps = 0
-  total_price_baby_seat = 0
-  total_price_additional_insurance = 0
-  options_array = []
 
   unless rental_options.empty?
     rental_options.each do |option|

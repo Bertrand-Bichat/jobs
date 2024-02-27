@@ -2,7 +2,10 @@
   "rentals": [
     {
       "id": 1,
-      "options": ["gps", "baby_seat"],
+      "options": [
+        "gps",
+        "baby_seat"
+      ],
       "actions": [
         {
           "who": "driver",
@@ -33,7 +36,9 @@
     },
     {
       "id": 2,
-      "options": ["additional_insurance"],
+      "options": [
+        "additional_insurance"
+      ],
       "actions": [
         {
           "who": "driver",
